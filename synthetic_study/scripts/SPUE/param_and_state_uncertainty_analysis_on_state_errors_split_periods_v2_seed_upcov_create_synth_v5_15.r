@@ -1,17 +1,25 @@
 
-
+if(length(commandArgs(TRUE))!=0){
+  arguments <- commandArgs(TRUE)
+  cat("arguments:",arguments,"\n")
+  
+  seed_number<-as.numeric(arguments[[1]])
+}
 
 if(Sys.info()["sysname"]=="Linux"){
-  wd<-"/data/kim079/model_optimisation_framework_v2"
+  # wd<-"/data/kim079/model_optimisation_framework_v2"
+  wd<-"/datasets/work/LW_TVD_MDBA_WORK/8_Working/7_Shaun/data_backup/kim079/model_optimisation_framework_v2"
 } else {
-  wd<-"C:/Users/kim079/Documents/model_optimisation_framework"
+  # wd<-"C:/Users/kim079/Documents/model_optimisation_framework"
+  wd<-"Y:/"
 }
 
 
 # seed_number<-4
+# cornum<-10
 
 setwd(wd)
-output_dir<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_seed_",seed_number)
+output_dir<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15_seed_",seed_number)
 dir.create(output_dir,showWarnings = F)
 
 theta_files<-list.files(output_dir,pattern="theta_",full.names = T)
@@ -80,16 +88,16 @@ loglikelihood_fun<-function(data,params){
   
   num_of_adjustments<-data$num_of_adjustments
   indices_states_adjustments<-round(params[9:(8+num_of_adjustments)])
-  state_adjustments<-params[(9+num_of_adjustments):(8+num_of_adjustments*2)]
-  state_error_adjustments<-rep(0,nrow(data$cal.input)-1)
+  state_adjustments<-params[(9+num_of_adjustments):(8+num_of_adjustments*2)]*params[1]
+  state_values<-rep(-1e6,nrow(data$cal.input)-1)
   if(any(indices_states_adjustments<=0)){
     return(-Inf)
   }
-  state_error_adjustments[indices_states_adjustments]<-state_adjustments
+  state_values[indices_states_adjustments]<-state_adjustments
   # if(all(state_adjustments!=0)) browser()
   Q1<-gr4j.run(param=params[1:4], initial_state_S=params[5]*params[1], initial_state_R=params[6]*params[3], 
-               state_error=state_error_adjustments, input=data$cal.input,
-               state_error_R=rep(0,nrow(data$cal.input)-1),
+               state_error=rep(0,nrow(data$cal.input)-1), input=data$cal.input,
+               state_error_R=rep(0,nrow(data$cal.input)-1),state_S_ts = state_values,
                run_compiled = T,return_state=F)/1000*data$area_m2/86400 #convert to cumecs
 
   if(is.na(Q1[1])){
@@ -260,10 +268,17 @@ tune<-function(scale, acc_rate){
 set.seed(12321)
 
 
-export_diagnostic<-T
+export_diagnostic<-F
+if(Sys.info()["sysname"]=="Linux"){
+  export_diagnostic<-T
+}
 
-input_ts_file<-"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
-param_file<-"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
+# input_ts_file<-paste0("output/gr4j.calib.state.adjusted_",cornum,"cor/state_error_simulation_data_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
+# param_file<-paste0("output/gr4j.calib.state.adjusted_",cornum,"cor/gr4j_params_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
+input_ts_file<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/state_error_simulation_data_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
+param_file<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/gr4j_params_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
+
+
 
 input_ts<-read.csv(input_ts_file,as.is=T)
 orig_params<-read.csv(param_file,as.is=T)
@@ -295,7 +310,7 @@ for(i in length_param_ranges_tmp:(length_param_ranges_tmp+num_of_adjustments-1))
   # param.ranges[[i+1]]<-c(1,nrow(data$cal.input)-1)
 }
 for(i in length(param.ranges):(length(param.ranges)+num_of_adjustments-1)){
-  param.ranges[[i+1]]<-c(-10000,10000)
+  param.ranges[[i+1]]<-c(0,1)
 }
 
 params_min<-sapply(param.ranges,function(x) x[1])
@@ -310,7 +325,41 @@ numeric_orig_params<-as.numeric(orig_params[1,-ncol(orig_params)])
 # initial_params<-c(numeric_orig_params[1:4],numeric_orig_params[5]/numeric_orig_params[1],numeric_orig_params[6]/numeric_orig_params[3],exp(-2.078),0.829,
 #                   1:num_of_adjustments,rep(0,num_of_adjustments))
 initial_params<-c(numeric_orig_params[1:4],numeric_orig_params[5]/numeric_orig_params[1],numeric_orig_params[6]/numeric_orig_params[3],exp(-2.078),0.829,
-                  (start_periods+end_periods)/2,rep(0,num_of_adjustments))
+                  (start_periods+end_periods)/2,rep(0.5,num_of_adjustments))
+
+
+# get initial parameters
+
+# init_state_S_ts<-input_ts$state_S_ts
+init_file<-"output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/all_actual_params_401013.csv"
+init<-as.numeric(read.csv(init_file,as.is=T))
+length_adjust_synth<-length(9:length(init))/2
+
+
+new_init_indices<-c()
+new_init_adjustments<-c()
+indices_of_indices<-9:(8+num_of_adjustments)
+indices_of_indices_synth<-9:(8+length_adjust_synth)
+
+init_indices<-init[9:(8+length_adjust_synth)]
+init_adjustments<-init[(9+length_adjust_synth):(8+length_adjust_synth*2)]
+
+for(i in 1:length(indices_of_indices)){
+  index_init<-which(init[indices_of_indices_synth]>=params_min[indices_of_indices[i]] & init[indices_of_indices_synth]<params_max[indices_of_indices[i]])
+  params_min[indices_of_indices[i]]
+  params_max[indices_of_indices[i]]
+  init[indices_of_indices_synth][index_init]
+  index_init<-index_init[length(index_init)]
+  new_init_indices<-c(new_init_indices,init_indices[index_init])
+  new_init_adjustments<-c(new_init_adjustments,init_adjustments[index_init])
+}
+initial_params[1:8]<-init[1:8]
+
+initial_params[indices_of_indices]<-new_init_indices
+initial_params[(9+num_of_adjustments):(8+num_of_adjustments*2)]<-new_init_adjustments
+
+
+
 # initial_params<-c(numeric_orig_params[1:4],numeric_orig_params[5]/numeric_orig_params[1],numeric_orig_params[6]/numeric_orig_params[3],10,10)
 
 # logprior_init<-logprior_fun(initial_params,params_min,params_max,data)
@@ -323,19 +372,23 @@ loglike_init<--Inf
 # seed_number<-as.numeric(seed_number[length(seed_number)])
 set.seed(seed_number)
 
+initial_params_orig<-initial_params
 initial_params_counter<-0
 while(is.infinite(logprior_init) | is.infinite(loglike_init)){
   initial_params_counter<-initial_params_counter+1
   if(initial_params_counter>1e6) stop("initialisation shouldn't take this long")
+  # for(i in 1:6){
+  #   initial_params[i]<-runif(1,param.ranges[[i]][1],param.ranges[[i]][2])
+  # }
   for(i in 1:6){
-    initial_params[i]<-runif(1,param.ranges[[i]][1],param.ranges[[i]][2])
+    initial_params[i]<-runif(1,initial_params_orig[i]*0.9,initial_params_orig[i]*1.1)
   }
   
   logprior_init<-logprior_fun(initial_params,params_min,params_max,data)
   loglike_init<-loglikelihood_fun(data,initial_params)[[1]]
 }
 
-
+logprior_init+loglike_init
 
 if(is.infinite(logprior_init+loglike_init)) stop("Initialisation failed!")
 

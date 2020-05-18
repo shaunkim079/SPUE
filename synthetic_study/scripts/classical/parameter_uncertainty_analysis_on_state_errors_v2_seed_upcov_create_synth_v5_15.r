@@ -1,18 +1,23 @@
 
-
+if(length(commandArgs(TRUE))!=0){
+  arguments <- commandArgs(TRUE)
+  cat("arguments:",arguments,"\n")
+  
+  seed_number<-as.numeric(arguments[[1]])
+}
 
 if(Sys.info()["sysname"]=="Linux"){
-  wd<-"/data/kim079/model_optimisation_framework_v2"
+  # wd<-"/data/kim079/model_optimisation_framework_v2"
+  wd<-"/datasets/work/LW_TVD_MDBA_WORK/8_Working/7_Shaun/data_backup/kim079/model_optimisation_framework_v2"
 } else {
-  wd<-"C:/Users/kim079/Documents/model_optimisation_framework"
+  # wd<-"C:/Users/kim079/Documents/model_optimisation_framework"
+  wd<-"Y:/"
 }
-output_dir<-paste0("output/gibbs_sampler_param_uncertainty_on_state_errors_upcov_seed_",seed_number)
-
-
-
 
 setwd(wd)
+output_dir<-paste0("output/gibbs_sampler_param_uncertainty_on_state_errors_upcov_create_synth_v5_15_seed_",seed_number)
 dir.create(output_dir,showWarnings = F)
+
 
 theta_files<-list.files(output_dir,pattern="theta_",full.names = T)
 if(length(theta_files)>0){
@@ -242,8 +247,10 @@ set.seed(12321)
 
 export_diagnostic<-T
 
-input_ts_file<-"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
-param_file<-"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
+# input_ts_file<-"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
+# param_file<-"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
+input_ts_file<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/state_error_simulation_data_401013.csv")
+param_file<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/gr4j_params_401013.csv")
 
 input_ts<-read.csv(input_ts_file,as.is=T)
 orig_params<-read.csv(param_file,as.is=T)
