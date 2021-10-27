@@ -5,16 +5,18 @@ if(length(commandArgs(TRUE))!=0){
   
   seed_number<-as.numeric(arguments[[1]])
 }
+# seed_number is required to run
 
+# set up the directory
 if(Sys.info()["sysname"]=="Linux"){
   # wd<-"/data/kim079/model_optimisation_framework_v2"
-  wd<-"/datasets/work/LW_TVD_MDBA_WORK/8_Working/7_Shaun/data_backup/kim079/model_optimisation_framework_v2"
+  wd<-"/datasets/work/LW_TVD_MDBA_WORK/8_Working/7_Shaun/data_backup/kim079/SPUE/synthetic_study"
 } else {
   # wd<-"C:/Users/kim079/Documents/model_optimisation_framework"
-  wd<-"Y:/"
+  wd<-"C:/Users/kim079/OneDrive - CSIRO/Documents/SPUE/synthetic_study"
 }
 
-
+# seed_number<-4
 # seed_number<-4
 # cornum<-10
 
@@ -275,8 +277,8 @@ if(Sys.info()["sysname"]=="Linux"){
 
 # input_ts_file<-paste0("output/gr4j.calib.state.adjusted_",cornum,"cor/state_error_simulation_data_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
 # param_file<-paste0("output/gr4j.calib.state.adjusted_",cornum,"cor/gr4j_params_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
-input_ts_file<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/state_error_simulation_data_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
-param_file<-paste0("output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/gr4j_params_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
+input_ts_file<-paste0("data/state_error_simulation_data_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/state_error_simulation_data_401013.csv"
+param_file<-paste0("data/gr4j_params_401013.csv") #"data/gibbs_sampler_param_uncertainty_on_state_errors/gr4j_params_401013.csv"
 
 
 
@@ -331,7 +333,7 @@ initial_params<-c(numeric_orig_params[1:4],numeric_orig_params[5]/numeric_orig_p
 # get initial parameters
 
 # init_state_S_ts<-input_ts$state_S_ts
-init_file<-"output/gibbs_sampler_param_and_state_uncertainty_on_state_errors_split_periods_v2_upcov_create_synth_v5_15/all_actual_params_401013.csv"
+init_file<-"data/all_actual_params_401013.csv"
 init<-as.numeric(read.csv(init_file,as.is=T))
 length_adjust_synth<-length(9:length(init))/2
 
